@@ -1,0 +1,54 @@
+{% extends 'app/base.html' %}
+
+{% block title %}Change Password{% endblock %}
+
+{% block content %}
+
+        <!-- edit form column -->
+        <div class="col-lg-12 mt-4">
+            <h4>Change Password</h4>
+            <br>
+            <br>
+        </div>
+        <div class="col-lg-8 push-lg-4 personal-info">
+             <form role="form" action="{% url 'changepwd' %}" method="post">
+                 {% csrf_token %}
+                <div class="form-group row">
+                    <label class="col-lg-4 col-form-label form-control-label">Current Password</label>
+                    <div class="col-lg-8">
+                        <input name="current" class="form-control" type="password" value="" required/>
+                    </div>
+                </div>
+                 <div class="form-group row">
+                    <label class="col-lg-4 col-form-label form-control-label">New Password</label>
+                    <div class="col-lg-8">
+                        <input name="newpwd" class="form-control" type="password" value="" required/>
+                    </div>
+                </div>
+                 <div class="form-group row">
+                    <label class="col-lg-4 col-form-label form-control-label">Confirm Password</label>
+                    <div class="col-lg-8">
+                        <input name="newpwd1" class="form-control" type="password" value="" required/>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label class="col-lg-3 col-form-label form-control-label"></label>
+                    <div class="col-lg-9">
+                        <input type="reset" class="btn btn-secondary" value="Cancel" />
+                        <input type="submit" class="btn btn-primary" value="Save" />
+                    </div>
+                </div>
+            </form>
+        </div>
+<!--        <div class="col-lg-4 pull-lg-8 text-xs-center">-->
+<!--                <img src="//placehold.it/150" class="m-x-auto img-fluid img-circle" alt="avatar" />-->
+<!--                <h6 class="m-t-2">Upload a different photo</h6>-->
+<!--                <label class="custom-file">-->
+<!--                  <input type="file" id="file" class="custom-file-input">-->
+<!--                  <span class="custom-file-control">Choose file</span>-->
+<!--                </label>-->
+<!--        </div>-->
+
+<hr />
+{% endblock %}
+

@@ -20,4 +20,9 @@ from . import views
 urlpatterns = [
     path('', views.loginpage, name='login'),
     path('home/', views.homepage, name='home'),
+    path('signup/', views.signup, name="signup"),
+    path('logout/', views.logoutlink, name="logout"),
+    path('profile/', views.profilepage, name="profile"),
+    path('changepass/', views.changepwd, name="changepwd"),
+
 ]

@@ -74,31 +74,56 @@
           border-top-left-radius: 0;
           border-top-right-radius: 0;
         }
+        #inputPassword {
+            margin-bottom: -1px;
+          border-bottom-right-radius: 0;
+          border-bottom-left-radius: 0;
+        }
 
     </style>
 
 </head>
 <body class="text-center">
 
-<form class="form-signin" action="{% url 'login' %}" method="post">
+<form class="form-signin" action="{% url 'signup' %}" method="post" id="signup_form" onsubmit="return checkPassword()">
     {% csrf_token %}
 
-    <h1 class="h3 mb-3 font-weight-normal">Please sign in</h1>
-    {% if messages %}
-        <div class="help mb-3">
+    <h1 class="h3 mb-3 font-weight-normal">Sign up page</h1>
+
+    <div class="help mb-3" id="helpText">
+        {% if messages %}
         {% for message in messages %}
-            {{ message }}
+        {{ message }}
         {% endfor %}
-        </div>
-    {% endif %}
+        {% endif %}
+    </div>
+
     <label for="inputEmail" class="sr-only">Username</label>
     <input type="text" name="username" id="inputEmail" class="form-control" placeholder="Username" required="true" autofocus="true">
     <label for="inputPassword" class="sr-only">Password</label>
     <input type="password" name="password" id="inputPassword" class="form-control" placeholder="Password" required="true">
-    <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
-    <div class="help mt-2">Don't have an account? <a href="{% url 'signup' %}">Sign up</a></div>
+    <label for="inputPassword1" class="sr-only">Confirm Password</label>
+    <input type="password" name="cf_password" id="inputPassword1" class="form-control" placeholder="Confirm Password" required="true">
+    <button class="btn btn-lg btn-primary btn-block" type="submit" id="submit_button">Sign up</button>
+    <div class="help mt-2">Already have an account? <a href="{% url 'login' %}">Sign in</a> instead</div>
     <p class="mt-5 mb-3 text-muted">© Kushal Shah</p>
 </form>
 
+<script type="text/javascript">
+    function checkPassword()
+    {
+        let p1 = document.getElementById('inputPassword');
+        let p2 = document.getElementById('inputPassword1');
+        if(p1.value === p2.value)
+        {
+            return true;
+        }
+        else
+        {
+            document.getElementById('helpText').innerHTML = 'Password does not match';
+            return false;
+        }
+    }
+</script>
 
 </body></html>
