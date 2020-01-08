@@ -1,0 +1,31 @@
+{% extends 'app/base.html' %}
+
+{% block title %}Likes{% endblock %}
+
+{% block content %}
+
+<h3 class="mb-3">Who liked the blog</h3>
+<div class="row">
+    {% if users %}
+    <table class="table col-6">
+        <thead class="thead-dark">
+        <tr>
+            <th scope="col" width="50%">#</th>
+            <th scope="col">Username</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for user in users %}
+        <tr>
+            <th scope="row">{{ forloop.counter }}</th>
+            <td>{{ user.name }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <h6>Sorry, no likes for this post.</h6>
+    {% endif %}
+    <div class="col-12"><a href="{% url 'home' %}"><button type="button" class="btn btn-primary"><i class="fa fa-arrow-circle-left" aria-hidden="true"></i> Go Back</button></a></div>
+</div>
+{% endblock %}

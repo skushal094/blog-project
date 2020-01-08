@@ -3,6 +3,8 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.contrib.auth.hashers import check_password
+from .models import Blog, Like, Comment
+from django.db.models import Count, F, Q
 
 
 def loginpage(request):
@@ -25,7 +27,13 @@ def homepage(request):
     if not request.user.is_authenticated:
         messages.add_message(request, messages.INFO, "Please Login First.")
         return redirect(loginpage)
-    return render(request, 'app/home.html')
+    blogs = Blog.objects.filter(Q(like__is_deleted=False)).annotate(likes=Count('like__blog_id'))
+    this_user_liked = Like.objects.filter(user_id=request.user, is_deleted = False).values('blog_id')
+    this_user_liked = list(this_user_liked)
+    liked_blogs = set()
+    for i in this_user_liked:
+        liked_blogs.add(i['blog_id'])
+    return render(request, 'app/home.html', {'blogs': blogs, 'liked_blogs': liked_blogs})
 
 
 def signup(request):
@@ -53,6 +61,9 @@ def logoutlink(request):
 
 
 def profilepage(request):
+    if not request.user.is_authenticated:
+        messages.add_message(request, messages.INFO, "Please Login First.")
+        return redirect(loginpage)
     if request.method == 'POST':
         username = request.POST.get('username')
         user = User.objects.get(username=username)
@@ -65,6 +76,9 @@ def profilepage(request):
 
 
 def changepwd(request):
+    if not request.user.is_authenticated:
+        messages.add_message(request, messages.INFO, "Please Login First.")
+        return redirect(loginpage)
     if request.method == 'POST':
         username = request.user.get_username()
         user = User.objects.get(username=username)
@@ -82,3 +96,29 @@ def changepwd(request):
         else:
             messages.add_message(request, messages.WARNING, "Passwords do not match")
     return render(request, 'app/changepwd.html', {})
+
+
+def likes(request, blog_id):
+    if not request.user.is_authenticated:
+        messages.add_message(request, messages.INFO, "Please Login First.")
+        return redirect(loginpage)
+    users = Like.objects.all().filter(blog_id=blog_id, is_deleted=False).annotate(name=F('user_id__username'))
+    return render(request, 'app/likespage.html', {'users': users})
+
+
+def likeflip(request, blog_id):
+    if not request.user.is_authenticated:
+        messages.add_message(request, messages.INFO, "Please Login First.")
+        return redirect(loginpage)
+    like_entry = Like.objects.filter(blog_id=blog_id, user_id=request.user)
+    if not like_entry:
+        blog = Blog.objects.get(pk=blog_id)
+        new_like = Like.objects.create(blog_id=blog, user_id=request.user)
+    else:
+        like_entry = like_entry[0]
+        if like_entry.is_deleted:
+            like_entry.is_deleted = False
+        else:
+            like_entry.is_deleted =True
+        like_entry.save()
+    return redirect(homepage)
