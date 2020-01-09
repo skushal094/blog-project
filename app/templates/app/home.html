@@ -19,9 +19,9 @@
                 <div class="btn-group">
                     <a href="{% url 'like_flip' blog_id=blog.pk %}" type="button" class="btn {% if blog.pk in liked_blogs %}btn-primary{% endif %} btn-sm btn-outline-secondary" {% if blog.pk in liked_blogs %} style="color: white;" {% endif %}><i class="fa fa-thumbs-up" aria-hidden="true"></i>
 </a>
-                    <a class="btn btn-sm btn-outline-secondary" href="{% url 'likes' blog_id=blog.pk %}">{{ blog.likes }}</a>
+                    <a class="btn btn-sm btn-outline-secondary" href="{% url 'likes' blog_id=blog.pk %}">{{ likes|blog_id=blog.pk }}</a>
                 </div>
-                <small class="text-muted">9 mins</small>
+                <small class="text-muted">On {{ blog.updated_at|date:'d M, Y' }} at {{ blog.updated_at|date:"P" }}</small>
             </div>
         </div>
     </div>

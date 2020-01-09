@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from django.contrib import messages
 from django.contrib.auth.hashers import check_password
 from .models import Blog, Like, Comment
-from django.db.models import Count, F, Q
+from django.db.models import Count, F, Q, Case, When, BooleanField
 
 
 def loginpage(request):
@@ -27,13 +27,17 @@ def homepage(request):
     if not request.user.is_authenticated:
         messages.add_message(request, messages.INFO, "Please Login First.")
         return redirect(loginpage)
-    blogs = Blog.objects.filter(Q(like__is_deleted=False)).annotate(likes=Count('like__blog_id'))
+    # blogs = Blog.objects.filter(Q(like__is_deleted=False)).annotate(likes=Count('like__blog_id'))
+    blogs = Blog.objects.all().filter(is_deleted=False)
+    # blogs = blogs.annotate(likes=Case(When(like__is_deleted=False, then=Count('like__blog_id')), default=0), deleted=Case(When(like__is_deleted=True, then=True), default=False, output_field=BooleanField())).filter(deleted=False)
+    likes = list(Like.objects.all().filter(is_deleted=False).values('blog_id').annotate(likes=Count('blog_id')))
+    blogs = blogs.order_by('-updated_at')
     this_user_liked = Like.objects.filter(user_id=request.user, is_deleted = False).values('blog_id')
     this_user_liked = list(this_user_liked)
     liked_blogs = set()
     for i in this_user_liked:
         liked_blogs.add(i['blog_id'])
-    return render(request, 'app/home.html', {'blogs': blogs, 'liked_blogs': liked_blogs})
+    return render(request, 'app/home.html', {'blogs': blogs, 'likes': likes, 'liked_blogs': liked_blogs})
 
 
 def signup(request):
@@ -72,6 +76,7 @@ def profilepage(request):
         user.last_name = request.POST.get('last_name')
         user.save()
         messages.add_message(request, messages.SUCCESS, "Profile updated successfully")
+        return redirect(homepage)
     return render(request, 'app/profile.html', {})
 
 
@@ -122,3 +127,21 @@ def likeflip(request, blog_id):
             like_entry.is_deleted =True
         like_entry.save()
     return redirect(homepage)
+
+
+def newblog(request):
+    if not request.user.is_authenticated:
+        messages.add_message(request, messages.INFO, "Please Login First.")
+        return redirect(loginpage)
+    if request.method == 'POST':
+        allowed = ['jpg', 'jpeg', 'png']
+        user = request.user
+        image = request.FILES['image']
+        desc = request.POST.get('desc')
+        if str(image).split('.')[-1] in allowed:
+            new_blog = Blog.objects.create(author=user, image=image, description=desc)
+            messages.add_message(request, messages.SUCCESS, "Congratulations! Your new blog is live now.")
+            return redirect(homepage)
+        else:
+            messages.add_message(request, messages.ERROR, "Image must be .jpg, .jpeg or .png")
+    return render(request, 'app/newblog.html', {})
