@@ -1,0 +1,50 @@
+{% extends 'app/base.html' %}
+
+{% block title %}Comments{% endblock %}
+
+{% block content %}
+
+<h3 class="mb-3">Blog from {{ blog.author }}</h3>
+<div class="help"><small class="text-muted">On {{ blog.updated_at|date:'d M, Y' }} at {{ blog.updated_at|date:"P" }}</small></div>
+<div class="row">
+
+    <div class="col-sm-12 col-md-12 col-lg-6"><img class="img-fluid" src="{{ blog.image.url }}"></div>
+    <div class="col-sm-12 col-md-12 col-lg-6"><p>{{ blog.description }}</p></div>
+</div>
+    <div class="btn-group mt-3">
+        <a href="{% url 'like_flip' blog_id=blog.pk %}" type="button" class="btn {% if like %}btn-primary{% endif %} btn-sm btn-outline-secondary" {% if like %} style="color: white;" {% endif %}><i class="fa fa-thumbs-up" aria-hidden="true"></i>
+        </a>
+        <a class="btn btn-sm btn-outline-secondary" href="{% url 'likes' blog_id=blog.pk %}?refer={{ request.path|urlencode }}">{{ blog.likes }}</a>
+    </div>
+<div class="help"><small class="text-muted">{{ blog.comments }} comments</small></div>
+<!--{% for blog in blogs %}-->
+
+
+<!--<div class="col-md-4">-->
+<!--    <div class="card mb-4 box-shadow">-->
+<!--        <img class="card-img-top" src="{{ blog.image.url }}" alt="Thumbnail [100%x225]" style="height: 225px; width: 100%; display: block;" data-holder-rendered="true">-->
+<!--        <div class="card-body">-->
+<!--            <h5 class="card-title">{{ blog.author }}</h5>-->
+<!--            <p class="card-text">{{ blog.description }}</p>-->
+<!--            <div class="d-flex justify-content-between align-items-center">-->
+<!--                <div class="btn-group">-->
+<!--                    <a href="{% url 'like_flip' blog_id=blog.pk %}" type="button" class="btn {% if blog.pk in liked_blogs %}btn-primary{% endif %} btn-sm btn-outline-secondary" {% if blog.pk in liked_blogs %} style="color: white;" {% endif %}><i class="fa fa-thumbs-up" aria-hidden="true"></i>-->
+<!--</a>-->
+<!--                    <a class="btn btn-sm btn-outline-secondary" href="{% url 'likes' blog_id=blog.pk %}">{{ blog.likes }}</a>-->
+<!--                </div>-->
+<!--                <small class="text-muted">On {{ blog.updated_at|date:'d M, Y' }} at {{ blog.updated_at|date:"P" }}</small>-->
+<!--            </div>-->
+<!--            <div class="d-flex justify-content-between align-items-center mt-1">-->
+<!--                <div class="btn-group"><a class="btn btn-sm btn-outline-primary" href="{% url 'comments' blog_id=blog.pk %}"><small class="">Add/View Comments</small></a></div>-->
+<!--                <div class="btn-group">-->
+<!--                    <a type="button" class="btn btn-sm btn-outline-secondary">{{ blog.comments }}</a>-->
+<!--                    <a class="btn btn-sm btn-outline-secondary"><i class="fa fa-comments"></i></a>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</div>-->
+
+
+<!--{% endfor %}-->
+{% endblock %}

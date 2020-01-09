@@ -19,9 +19,16 @@
                 <div class="btn-group">
                     <a href="{% url 'like_flip' blog_id=blog.pk %}" type="button" class="btn {% if blog.pk in liked_blogs %}btn-primary{% endif %} btn-sm btn-outline-secondary" {% if blog.pk in liked_blogs %} style="color: white;" {% endif %}><i class="fa fa-thumbs-up" aria-hidden="true"></i>
 </a>
-                    <a class="btn btn-sm btn-outline-secondary" href="{% url 'likes' blog_id=blog.pk %}">{{ blog.likes }}</a>
+                    <a class="btn btn-sm btn-outline-secondary" href="{% url 'likes' blog_id=blog.pk %}?refer={{ request.path|urlencode }}">{{ blog.likes }}</a>
                 </div>
                 <small class="text-muted">On {{ blog.updated_at|date:'d M, Y' }} at {{ blog.updated_at|date:"P" }}</small>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mt-1">
+                <div class="btn-group"><a class="btn btn-sm btn-outline-primary" href="{% url 'comments' blog_id=blog.pk %}"><small class="">Add/View Comments</small></a></div>
+                <div class="btn-group">
+                    <a type="button" class="btn btn-sm btn-outline-secondary">{{ blog.comments }}</a>
+                    <a class="btn btn-sm btn-outline-secondary"><i class="fa fa-comments"></i></a>
+                </div>
             </div>
         </div>
     </div>

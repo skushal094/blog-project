@@ -7,6 +7,7 @@ class Blog(models.Model):
     image = models.ImageField(upload_to='images/')
     description = models.TextField(max_length=350)
     likes = models.IntegerField(default=0)
+    comments = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=True)
     is_deleted = models.BooleanField(default=False)

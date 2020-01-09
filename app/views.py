@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from django.contrib import messages
 from django.contrib.auth.hashers import check_password
 from .models import Blog, Like, Comment
-from django.db.models import Count, F, Q, Case, When, BooleanField
+from django.db.models import F, Case, When, BooleanField
 
 
 def loginpage(request):
@@ -29,10 +29,12 @@ def homepage(request):
         return redirect(loginpage)
     # blogs = Blog.objects.filter(Q(like__is_deleted=False)).annotate(likes=Count('like__blog_id'))
     blogs = Blog.objects.all().filter(is_deleted=False)
-    # blogs = blogs.annotate(likes=Case(When(like__is_deleted=False, then=Count('like__blog_id')), default=0), deleted=Case(When(like__is_deleted=True, then=True), default=False, output_field=BooleanField())).filter(deleted=False)
-    # likes = list(Like.objects.all().filter(is_deleted=False).values('blog_id').annotate(likes=Count('blog_id')))
+    # blogs = blogs.annotate(likes=Case(When(like__is_deleted=False, then=Count('like__blog_id')), default=0),
+    # deleted=Case(When(like__is_deleted=True, then=True), default=False, output_field=BooleanField())).filter(
+    # deleted=False) likes = list(Like.objects.all().filter(is_deleted=False).values('blog_id').annotate(likes=Count(
+    # 'blog_id')))
     blogs = blogs.order_by('-created_at')
-    this_user_liked = Like.objects.filter(user_id=request.user, is_deleted = False).values('blog_id')
+    this_user_liked = Like.objects.filter(user_id=request.user, is_deleted=False).values('blog_id')
     this_user_liked = list(this_user_liked)
     liked_blogs = set()
     for i in this_user_liked:
@@ -108,7 +110,11 @@ def likes(request, blog_id):
         messages.add_message(request, messages.INFO, "Please Login First.")
         return redirect(loginpage)
     users = Like.objects.all().filter(blog_id=blog_id, is_deleted=False).annotate(name=F('user_id__username'))
-    return render(request, 'app/likespage.html', {'users': users})
+    try:
+        link = request.GET.get('refer')
+        return render(request, 'app/likespage.html', {'users': users, 'refer': link})
+    except:
+        return render(request, 'app/likespage.html', {'users': users, 'refer': link})
 
 
 def likeflip(request, blog_id):
@@ -126,7 +132,7 @@ def likeflip(request, blog_id):
             like_entry.is_deleted = False
             blog.likes += 1
         else:
-            like_entry.is_deleted =True
+            like_entry.is_deleted = True
             blog.likes -= 1
         blog.save()
         like_entry.save()
@@ -162,3 +168,15 @@ def myblogs(request):
     for i in this_user_liked:
         liked_blogs.add(i['blog_id'])
     return render(request, 'app/myblogs.html', {'blogs': blogs, 'liked_blogs': liked_blogs})
+
+
+def comments(request, blog_id):
+    if not request.user.is_authenticated:
+        messages.add_message(request, messages.INFO, "Please Login First.")
+        return redirect(loginpage)
+    blog = Blog.objects.get(pk=blog_id)
+    case = Case(When(user_id=request.user), default=False, output_field=BooleanField())
+    like = Like.objects.filter(user_id=request.user, blog_id=blog_id, is_deleted=False)
+    cmts = Comment.objects.filter(is_deleted=False).annotate(mine=case)
+    allcmts = Comment.objects.filter(blog_id=blog, is_deleted=False).order_by('-created_at')
+    return render(request, 'app/comments.html', {'blog': blog, 'all_comments': allcmts,'my_comments': cmts, 'like': like})
