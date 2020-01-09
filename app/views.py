@@ -30,14 +30,14 @@ def homepage(request):
     # blogs = Blog.objects.filter(Q(like__is_deleted=False)).annotate(likes=Count('like__blog_id'))
     blogs = Blog.objects.all().filter(is_deleted=False)
     # blogs = blogs.annotate(likes=Case(When(like__is_deleted=False, then=Count('like__blog_id')), default=0), deleted=Case(When(like__is_deleted=True, then=True), default=False, output_field=BooleanField())).filter(deleted=False)
-    likes = list(Like.objects.all().filter(is_deleted=False).values('blog_id').annotate(likes=Count('blog_id')))
-    blogs = blogs.order_by('-updated_at')
+    # likes = list(Like.objects.all().filter(is_deleted=False).values('blog_id').annotate(likes=Count('blog_id')))
+    blogs = blogs.order_by('-created_at')
     this_user_liked = Like.objects.filter(user_id=request.user, is_deleted = False).values('blog_id')
     this_user_liked = list(this_user_liked)
     liked_blogs = set()
     for i in this_user_liked:
         liked_blogs.add(i['blog_id'])
-    return render(request, 'app/home.html', {'blogs': blogs, 'likes': likes, 'liked_blogs': liked_blogs})
+    return render(request, 'app/home.html', {'blogs': blogs, 'liked_blogs': liked_blogs})
 
 
 def signup(request):
@@ -116,15 +116,19 @@ def likeflip(request, blog_id):
         messages.add_message(request, messages.INFO, "Please Login First.")
         return redirect(loginpage)
     like_entry = Like.objects.filter(blog_id=blog_id, user_id=request.user)
+    blog = Blog.objects.get(pk=blog_id)
     if not like_entry:
-        blog = Blog.objects.get(pk=blog_id)
         new_like = Like.objects.create(blog_id=blog, user_id=request.user)
+        blog.likes += 1
     else:
         like_entry = like_entry[0]
         if like_entry.is_deleted:
             like_entry.is_deleted = False
+            blog.likes += 1
         else:
             like_entry.is_deleted =True
+            blog.likes -= 1
+        blog.save()
         like_entry.save()
     return redirect(homepage)
 
