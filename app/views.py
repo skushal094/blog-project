@@ -149,3 +149,16 @@ def newblog(request):
         else:
             messages.add_message(request, messages.ERROR, "Image must be .jpg, .jpeg or .png")
     return render(request, 'app/newblog.html', {})
+
+
+def myblogs(request):
+    if not request.user.is_authenticated:
+        messages.add_message(request, messages.INFO, "Please Login First.")
+        return redirect(loginpage)
+    blogs = Blog.objects.all().filter(is_deleted=False, author=request.user).order_by('-created_at')
+    this_user_liked = Like.objects.filter(user_id=request.user, is_deleted=False).values('blog_id')
+    this_user_liked = list(this_user_liked)
+    liked_blogs = set()
+    for i in this_user_liked:
+        liked_blogs.add(i['blog_id'])
+    return render(request, 'app/myblogs.html', {'blogs': blogs, 'liked_blogs': liked_blogs})

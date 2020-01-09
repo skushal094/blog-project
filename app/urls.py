@@ -11,4 +11,5 @@ urlpatterns = [
     path('likes/<int:blog_id>/', views.likes, name="likes"),
     path('likeflip/<int:blog_id>/', views.likeflip, name="like_flip"),
     path('newblog/', views.newblog, name="newblog"),
+    path('myblogs/', views.myblogs, name="myblogs"),
 ]
