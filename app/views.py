@@ -136,7 +136,7 @@ def likeflip(request, blog_id):
             blog.likes -= 1
         blog.save()
         like_entry.save()
-    return redirect(homepage)
+    return redirect(request.META.get('HTTP_REFERER', 'home'))
 
 
 def newblog(request):
@@ -175,8 +175,11 @@ def comments(request, blog_id):
         messages.add_message(request, messages.INFO, "Please Login First.")
         return redirect(loginpage)
     blog = Blog.objects.get(pk=blog_id)
-    case = Case(When(user_id=request.user), default=False, output_field=BooleanField())
+    if request.method == "POST":
+        if request.POST.get('action') == 'add':
+            cmt_text = request.POST.get('cmt_text')
+            new_cmt = Comment.objects.create(blog_id=blog, user_id=request.user, text=cmt_text)
     like = Like.objects.filter(user_id=request.user, blog_id=blog_id, is_deleted=False)
-    cmts = Comment.objects.filter(is_deleted=False).annotate(mine=case)
-    allcmts = Comment.objects.filter(blog_id=blog, is_deleted=False).order_by('-created_at')
-    return render(request, 'app/comments.html', {'blog': blog, 'all_comments': allcmts,'my_comments': cmts, 'like': like})
+    case = Case(When(user_id=request.user, then=True), default=False, output_field=BooleanField())
+    cmts = Comment.objects.filter(is_deleted=False, blog_id=blog_id).annotate(mine=case).order_by('-created_at')
+    return render(request, 'app/comments.html', {'blog': blog, 'comments': cmts, 'like': like})
