@@ -39,7 +39,8 @@ def homepage(request):
     liked_blogs = set()
     for i in this_user_liked:
         liked_blogs.add(i['blog_id'])
-    return render(request, 'app/home.html', {'blogs': blogs, 'liked_blogs': liked_blogs})
+    total_users = User.objects.all().count()
+    return render(request, 'app/home.html', {'blogs': blogs, 'liked_blogs': liked_blogs, 'total_users': total_users})
 
 
 def signup(request):
@@ -79,7 +80,8 @@ def profilepage(request):
         user.save()
         messages.add_message(request, messages.SUCCESS, "Profile updated successfully")
         return redirect(homepage)
-    return render(request, 'app/profile.html', {})
+    total_users = User.objects.all().count()
+    return render(request, 'app/profile.html', {'total_users': total_users})
 
 
 def changepwd(request):
@@ -102,7 +104,8 @@ def changepwd(request):
                 messages.add_message(request, messages.WARNING, "Incorrect current password")
         else:
             messages.add_message(request, messages.WARNING, "Passwords do not match")
-    return render(request, 'app/changepwd.html', {})
+    total_users = User.objects.all().count()
+    return render(request, 'app/changepwd.html', {'total_users': total_users})
 
 
 def likes(request, blog_id):
@@ -110,11 +113,12 @@ def likes(request, blog_id):
         messages.add_message(request, messages.INFO, "Please Login First.")
         return redirect(loginpage)
     users = Like.objects.all().filter(blog_id=blog_id, is_deleted=False).annotate(name=F('user_id__username'))
+    total_users = User.objects.all().count()
     try:
         link = request.GET.get('refer')
-        return render(request, 'app/likespage.html', {'users': users, 'refer': link})
+        return render(request, 'app/likespage.html', {'users': users, 'refer': link, 'total_users': total_users})
     except:
-        return render(request, 'app/likespage.html', {'users': users, 'refer': link})
+        return render(request, 'app/likespage.html', {'users': users, 'refer': link, 'total_users': total_users})
 
 
 def likeflip(request, blog_id):
@@ -126,6 +130,7 @@ def likeflip(request, blog_id):
     if not like_entry:
         new_like = Like.objects.create(blog_id=blog, user_id=request.user)
         blog.likes += 1
+        blog.save()
     else:
         like_entry = like_entry[0]
         if like_entry.is_deleted:
@@ -154,7 +159,8 @@ def newblog(request):
             return redirect(homepage)
         else:
             messages.add_message(request, messages.ERROR, "Image must be .jpg, .jpeg or .png")
-    return render(request, 'app/newblog.html', {})
+    total_users = User.objects.all().count()
+    return render(request, 'app/newblog.html', {'total_users': total_users})
 
 
 def myblogs(request):
@@ -167,7 +173,8 @@ def myblogs(request):
     liked_blogs = set()
     for i in this_user_liked:
         liked_blogs.add(i['blog_id'])
-    return render(request, 'app/myblogs.html', {'blogs': blogs, 'liked_blogs': liked_blogs})
+    total_users = User.objects.all().count()
+    return render(request, 'app/myblogs.html', {'blogs': blogs, 'liked_blogs': liked_blogs, 'total_users': total_users})
 
 
 def comments(request, blog_id):
@@ -182,4 +189,5 @@ def comments(request, blog_id):
     like = Like.objects.filter(user_id=request.user, blog_id=blog_id, is_deleted=False)
     case = Case(When(user_id=request.user, then=True), default=False, output_field=BooleanField())
     cmts = Comment.objects.filter(is_deleted=False, blog_id=blog_id).annotate(mine=case).order_by('-created_at')
-    return render(request, 'app/comments.html', {'blog': blog, 'comments': cmts, 'like': like})
+    total_users = User.objects.all().count()
+    return render(request, 'app/comments.html', {'blog': blog, 'comments': cmts, 'like': like, 'total_users': total_users})
