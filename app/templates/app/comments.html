@@ -29,9 +29,65 @@
 </form>
 
 {% if comments %}
-
+{% for comment in comments %}
+<div class="media text-muted pt-3">
+    <p class="media-body pb-3 mb-0 small lh-125 border-bottom border-gray">
+        <strong class="d-block text-gray-dark">
+            @{{comment.user_id.username}}
+            <span class="float-right">{{comment.updated_at|date:'d M, y'}} at {{comment.updated_at|date:'P'}}</span>
+        </strong>
+        {{comment.text}}
+        <small class="d-block text-gray-dark">
+            {% if comment.user_id == request.user %}
+            <i class="fa fa-thumbs-down" aria-hidden="true" data-id="{{ comment.id }}" id="like{{ comment.id }}" onclick="likeCommentFlip(this);"></i>
+            {% else %}
+            <i class="fa fa-thumbs-up" aria-hidden="true" data-id="{{ comment.id }}" id="like{{ comment.id }}" onclick="likeCommentFlip(this);"></i>
+            {% endif %}
+            &nbsp;&nbsp;&nbsp;
+            <span id="like{{ comment.id }}number">{{ comment.likes }}</span>
+            {% if comment.user_id == request.user %}
+            <span class="float-right delete-comment"  id="{{ comment.id }}" style="cursor: pointer;" onclick="deleteComment(this);"><i class="fa fa-trash" aria-hidden="true"></i></span>
+            {% endif %}
+        </small>
+    </p>
+</div>
+{% endfor %}
 {% else %}
 <div>Be the first one to comment on this blog.</div>
 {% endif %}
 
+{% endblock %}
+
+{% block scripting %}
+<script type="text/javascript">
+    $(document).ready(function(){
+
+    });
+    {% if comment.user_id == request.user %}
+    function deleteComment(e)
+    {
+        $.ajax({
+        type: 'GET',
+        url: "/comments/delete/" + e.id,
+        data: {
+            'blog_id': {{ blog.id }},
+        },
+        success: function(result){
+            $("#" + e.id).parent().parent().parent().remove();
+        }});
+    }
+    {% endif %}
+    function likeCommentFlip(e)
+    {
+        $.ajax({
+        type: 'GET',
+        url: "/comments/likeflip/",
+        data: {
+            'cmt_id': $("#" + e.id).attr('data-id'),
+        },
+        success: function(result){
+            $("#" + e.id + "number").html(result);
+        }});
+    }
+</script>
 {% endblock %}

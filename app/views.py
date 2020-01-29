@@ -1,10 +1,11 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, HttpResponse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.contrib.auth.hashers import check_password
 from .models import Blog, Like, Comment
-from django.db.models import F, Case, When, BooleanField
+from django.db.models import F, Case, When, BooleanField, Count
+from django.contrib.auth.decorators import login_required
 
 
 def loginpage(request):
@@ -177,6 +178,7 @@ def myblogs(request):
     return render(request, 'app/myblogs.html', {'blogs': blogs, 'liked_blogs': liked_blogs, 'total_users': total_users})
 
 
+@login_required(login_url="/")
 def comments(request, blog_id):
     if not request.user.is_authenticated:
         messages.add_message(request, messages.INFO, "Please Login First.")
@@ -186,8 +188,39 @@ def comments(request, blog_id):
         if request.POST.get('action') == 'add':
             cmt_text = request.POST.get('cmt_text')
             new_cmt = Comment.objects.create(blog_id=blog, user_id=request.user, text=cmt_text)
+            blog.comments += 1
+            blog.save()
     like = Like.objects.filter(user_id=request.user, blog_id=blog_id, is_deleted=False)
-    case = Case(When(user_id=request.user, then=True), default=False, output_field=BooleanField())
-    cmts = Comment.objects.filter(is_deleted=False, blog_id=blog_id).annotate(mine=case).order_by('-created_at')
+    # case = Case(When(user_id=request.user, then=True), default=False, output_field=BooleanField())
+    cmts = Comment.objects.filter(is_deleted=False, blog_id=blog_id).order_by('-created_at')
     total_users = User.objects.all().count()
     return render(request, 'app/comments.html', {'blog': blog, 'comments': cmts, 'like': like, 'total_users': total_users})
+
+
+@login_required(login_url='/')
+def delete_comment(request, comment_id):
+    cmt = Comment.objects.get(pk=comment_id)
+    cmt.is_deleted = True
+    cmt.save()
+    blog = Blog.objects.get(pk=cmt.blog_id.pk)
+    blog.comments -= 1
+    blog.save()
+    return HttpResponse("Done")
+
+
+@login_required(login_url='/')
+def comment_like_flip(request):
+    cmt_id = request.GET.get('cmt_id')
+    cmt = Comment.objects.get(pk=cmt_id)
+    if len(Comment.objects.filter(pk=cmt_id, likes_on_comment=request.user)) == 0:
+        print("Empty")
+        cmt.likes_on_comment.add(request.user)
+        cmt.likes += 1
+        cmt.save()
+        return HttpResponse(str(cmt.likes))
+    else:
+        print("Liked")
+        cmt.likes_on_comment.remove(request.user)
+        cmt.likes -= 1
+        cmt.save()
+        return HttpResponse(str(cmt.likes))

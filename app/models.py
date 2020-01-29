@@ -25,6 +25,8 @@ class Comment(models.Model):
     blog_id = models.ForeignKey(Blog, on_delete=models.CASCADE)
     user_id = models.ForeignKey(User, on_delete=models.CASCADE)
     text = models.TextField(max_length=100)
+    likes = models.IntegerField(default=0)
+    likes_on_comment = models.ManyToManyField(User, related_name='likes_on_comment', blank=True)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     updated_at = models.DateTimeField(auto_now=True, editable=True)
     is_deleted = models.BooleanField(default=False)
