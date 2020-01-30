@@ -64,7 +64,6 @@
     $(document).ready(function(){
 
     });
-    {% if comment.user_id == request.user %}
     function deleteComment(e)
     {
         $.ajax({
@@ -77,7 +76,6 @@
             $("#" + e.id).parent().parent().parent().remove();
         }});
     }
-    {% endif %}
     function likeCommentFlip(e)
     {
         $.ajax({

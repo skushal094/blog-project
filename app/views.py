@@ -275,7 +275,6 @@ def comment_like_flip(request):
 
 @login_required(login_url='/')
 def edit_comment(request, comment_id):
-    print(request.POST.get('cmt_text', ''))
     cmt = get_object_or_404(Comment, pk=comment_id, is_deleted=False)
     if request.method == "POST":
         cmt.text = request.POST.get('cmt_text', '') if request.POST.get('cmt_text', '') else cmt.text
