@@ -38,7 +38,7 @@
         </strong>
         {{comment.text}}
         <small class="d-block text-gray-dark">
-            {% if comment.user_id == request.user %}
+            {% if comment in my_cmts_liked %}
             <i class="fa fa-thumbs-down" aria-hidden="true" data-id="{{ comment.id }}" id="like{{ comment.id }}" onclick="likeCommentFlip(this);"></i>
             {% else %}
             <i class="fa fa-thumbs-up" aria-hidden="true" data-id="{{ comment.id }}" id="like{{ comment.id }}" onclick="likeCommentFlip(this);"></i>
@@ -87,6 +87,16 @@
         },
         success: function(result){
             $("#" + e.id + "number").html(result);
+            if ($('#' + e.id).hasClass('fa-thumbs-up'))
+            {
+                $('#' + e.id).removeClass('fa-thumbs-up');
+                $('#' + e.id).addClass('fa-thumbs-down');
+            }
+            else if ($('#' + e.id).hasClass('fa-thumbs-down'))
+            {
+                $('#' + e.id).removeClass('fa-thumbs-down');
+                $('#' + e.id).addClass('fa-thumbs-up');
+            }
         }});
     }
 </script>

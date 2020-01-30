@@ -13,7 +13,12 @@
     <div class="card mb-4 box-shadow">
         <img class="card-img-top" src="{{ blog.image.url }}" alt="Thumbnail [100%x225]" style="height: 225px; width: 100%; display: block;" data-holder-rendered="true">
         <div class="card-body">
-            <h5 class="card-title">{{ blog.author }}</h5>
+            <h5 class="card-title">
+                {{ blog.author }}
+                {% if blog.author == request.user %}
+                <span class="float-right delete-blog"  id="{{ blog.id }}" style="cursor: pointer;" onclick="deleteBlog(this);"><i class="fa fa-trash" aria-hidden="true"></i></span>
+                {% endif %}
+            </h5>
             <p class="card-text">{{ blog.description }}</p>
             <div class="d-flex justify-content-between align-items-center">
                 <div class="btn-group">
@@ -37,4 +42,20 @@
 
 {% endfor %}
     </div>
+{% endblock %}
+{% block scripting %}
+<script type="text/javascript">
+    function deleteBlog(e)
+    {
+        $.ajax({
+        type: 'GET',
+        url: "{% url 'delete_blog' %}",
+        data: {
+            'blog_id': e.id,
+        },
+        success: function(result){
+            $("#" + e.id).parent().parent().parent().parent().remove();
+        }});
+    }
+</script>
 {% endblock %}

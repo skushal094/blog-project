@@ -1,11 +1,15 @@
-from django.shortcuts import render, redirect, HttpResponse
+"""
+View file having views to handle user requests.
+"""
+
+from django.shortcuts import render, redirect, HttpResponse, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.contrib.auth.hashers import check_password
-from .models import Blog, Like, Comment
-from django.db.models import F, Case, When, BooleanField, Count
+from django.db.models import F, Case, When, BooleanField, Count, Q
 from django.contrib.auth.decorators import login_required
+from .models import Blog, Like, Comment
 
 
 def loginpage(request):
@@ -30,10 +34,13 @@ def homepage(request):
         return redirect(loginpage)
     # blogs = Blog.objects.filter(Q(like__is_deleted=False)).annotate(likes=Count('like__blog_id'))
     blogs = Blog.objects.all().filter(is_deleted=False)
-    # blogs = blogs.annotate(likes=Case(When(like__is_deleted=False, then=Count('like__blog_id')), default=0),
-    # deleted=Case(When(like__is_deleted=True, then=True), default=False, output_field=BooleanField())).filter(
-    # deleted=False) likes = list(Like.objects.all().filter(is_deleted=False).values('blog_id').annotate(likes=Count(
-    # 'blog_id')))
+    # blogs = blogs.annotate(likes=Case(
+    # When(like__is_deleted=False, then=Count('like__blog_id')), default=0),
+    # deleted=Case(When(like__is_deleted=True, then=True), default=False,
+    # output_field=BooleanField()))
+    # .filter(deleted=False)
+    # likes = list(Like.objects.all().filter(is_deleted=False).values('blog_id')
+    # .annotate(likes=Count('blog_id')))
     blogs = blogs.order_by('-created_at')
     this_user_liked = Like.objects.filter(user_id=request.user, is_deleted=False).values('blog_id')
     this_user_liked = list(this_user_liked)
@@ -41,7 +48,9 @@ def homepage(request):
     for i in this_user_liked:
         liked_blogs.add(i['blog_id'])
     total_users = User.objects.all().count()
-    return render(request, 'app/home.html', {'blogs': blogs, 'liked_blogs': liked_blogs, 'total_users': total_users})
+    return render(request, 'app/home.html', {'blogs': blogs,
+                                             'liked_blogs': liked_blogs,
+                                             'total_users': total_users})
 
 
 def signup(request):
@@ -113,13 +122,18 @@ def likes(request, blog_id):
     if not request.user.is_authenticated:
         messages.add_message(request, messages.INFO, "Please Login First.")
         return redirect(loginpage)
-    users = Like.objects.all().filter(blog_id=blog_id, is_deleted=False).annotate(name=F('user_id__username'))
+    users = Like.objects.all().filter(blog_id=blog_id, is_deleted=False)\
+        .annotate(name=F('user_id__username'))
     total_users = User.objects.all().count()
     try:
         link = request.GET.get('refer')
-        return render(request, 'app/likespage.html', {'users': users, 'refer': link, 'total_users': total_users})
+        return render(request, 'app/likespage.html', {'users': users,
+                                                      'refer': link,
+                                                      'total_users': total_users})
     except:
-        return render(request, 'app/likespage.html', {'users': users, 'refer': link, 'total_users': total_users})
+        return render(request, 'app/likespage.html', {'users': users,
+                                                      'refer': link,
+                                                      'total_users': total_users})
 
 
 def likeflip(request, blog_id):
@@ -156,7 +170,8 @@ def newblog(request):
         desc = request.POST.get('desc')
         if str(image).split('.')[-1] in allowed:
             new_blog = Blog.objects.create(author=user, image=image, description=desc)
-            messages.add_message(request, messages.SUCCESS, "Congratulations! Your new blog is live now.")
+            messages.add_message(request, messages.SUCCESS,
+                                 "Congratulations! Your new blog is live now.")
             return redirect(homepage)
         else:
             messages.add_message(request, messages.ERROR, "Image must be .jpg, .jpeg or .png")
@@ -175,7 +190,18 @@ def myblogs(request):
     for i in this_user_liked:
         liked_blogs.add(i['blog_id'])
     total_users = User.objects.all().count()
-    return render(request, 'app/myblogs.html', {'blogs': blogs, 'liked_blogs': liked_blogs, 'total_users': total_users})
+    return render(request, 'app/myblogs.html', {'blogs': blogs,
+                                                'liked_blogs': liked_blogs,
+                                                'total_users': total_users})
+
+
+@login_required(login_url='/')
+def delete_blog(request):
+    blog_id = request.GET.get('blog_id', 0)
+    blog = get_object_or_404(Blog, pk=blog_id, is_deleted=False)
+    blog.is_deleted = True
+    blog.save()
+    return HttpResponse("Done")
 
 
 @login_required(login_url="/")
@@ -183,7 +209,8 @@ def comments(request, blog_id):
     if not request.user.is_authenticated:
         messages.add_message(request, messages.INFO, "Please Login First.")
         return redirect(loginpage)
-    blog = Blog.objects.get(pk=blog_id)
+    # blog = Blog.objects.get(pk=blog_id)
+    blog = get_object_or_404(Blog, pk=blog_id)
     if request.method == "POST":
         if request.POST.get('action') == 'add':
             cmt_text = request.POST.get('cmt_text')
@@ -193,8 +220,13 @@ def comments(request, blog_id):
     like = Like.objects.filter(user_id=request.user, blog_id=blog_id, is_deleted=False)
     # case = Case(When(user_id=request.user, then=True), default=False, output_field=BooleanField())
     cmts = Comment.objects.filter(is_deleted=False, blog_id=blog_id).order_by('-created_at')
+    my_cmts_liked = Comment.objects.filter(Q(blog_id=blog)).filter(Q(likes_on_comment=request.user))
     total_users = User.objects.all().count()
-    return render(request, 'app/comments.html', {'blog': blog, 'comments': cmts, 'like': like, 'total_users': total_users})
+    return render(request, 'app/comments.html', {'blog': blog,
+                                                 'comments': cmts,
+                                                 'like': like,
+                                                 'total_users': total_users,
+                                                 'my_cmts_liked': my_cmts_liked})
 
 
 @login_required(login_url='/')
@@ -213,13 +245,11 @@ def comment_like_flip(request):
     cmt_id = request.GET.get('cmt_id')
     cmt = Comment.objects.get(pk=cmt_id)
     if len(Comment.objects.filter(pk=cmt_id, likes_on_comment=request.user)) == 0:
-        print("Empty")
         cmt.likes_on_comment.add(request.user)
         cmt.likes += 1
         cmt.save()
         return HttpResponse(str(cmt.likes))
     else:
-        print("Liked")
         cmt.likes_on_comment.remove(request.user)
         cmt.likes -= 1
         cmt.save()
