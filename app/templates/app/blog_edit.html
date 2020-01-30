@@ -1,0 +1,76 @@
+{% extends 'app/base.html' %}
+
+{% block title %}Blog from {{ blog.author }}{% endblock %}
+
+{% block content %}
+
+<h3 class="mb-3">Blog from {{ blog.author }}</h3>
+<div class="help"><small class="text-muted">On {{ blog.updated_at|date:'d M, Y' }} at {{ blog.updated_at|date:"P" }}</small></div>
+<form role="form" action="{% url 'edit_blog' blog_id=blog.id %}" method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="row">
+        <div class="col-sm-12 col-md-12 col-lg-6"><img class="img-fluid" src="{{ blog.image.url }}" id="blog-image" alt="select image to see preview or leave it blank to make no change"></div>
+        <div class="col-sm-12 col-md-12 col-lg-6">
+            <textarea name="desc" class="form-control" style="max-height:350px;" required>{{ blog.description }}</textarea>
+        </div>
+    </div>
+    <div class="row mt-3">
+        <div class="col-sm-12 col-md-12 col-lg-6">
+            <input id="imgField" name="image" class="form-control" type="file" onchange="checkExt(this.value)"/>
+            <div class="help" id="imgHelp"></div>
+        </div>
+        <div class="col-sm-12 col-md-12 col-lg-6">
+            <input type="submit" class="btn btn-primary" value="Save" />
+            <input type="reset" class="btn btn-secondary" value="Reset" />
+        </div>
+    </div>
+</form>
+<div class="row">
+    <div class="col-12 mt-3"><a href="{% url 'home' %}"><button type="button" class="btn btn-secondary"><i class="fa fa-arrow-circle-left" aria-hidden="true"></i> Go Back</button></a></div>
+</div>
+{% endblock %}
+
+{% block scripting %}
+<script type="text/javascript">
+    function checkExt(filename)
+    {
+        let allowedExtensions = {'.jpg': 1, '.jpeg': 1, '.png': 1};
+        var match = /\..+$/;
+        var ext = filename.match(match);
+        if(!allowedExtensions[ext])
+        {
+            document.getElementById('imgHelp').innerHTML = "Image must be .jpg, .jpeg or .png";
+            document.getElementById('imgField').value = "";
+        }
+        else
+        {
+            readURL(document.getElementById('imgField'));
+        }
+    }
+    function readURL(input)
+    {
+        const file = input.files[0];
+        const  fileType = file['type'];
+        const validImageTypes = ['image/gif', 'image/jpeg', 'image/png', 'image/jpg'];
+        if (!validImageTypes.includes(fileType) || input.files[0].size > 2000000)
+        {
+            document.getElementById('imgField').value = "";
+            document.getElementById('imgHelp').innerHTML = "Please select image having size less than 2 MB only.";
+            return false;
+        }
+        else
+        {
+            if (input.files && input.files[0])
+            {
+                var reader = new FileReader();
+                reader.onload = function (e)
+                {
+                    $('#blog-image').attr('src', e.target.result);
+                };
+                reader.readAsDataURL(input.files[0]);
+                return true;
+            }
+        }
+    }
+</script>
+{% endblock %}

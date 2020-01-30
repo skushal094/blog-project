@@ -204,6 +204,23 @@ def delete_blog(request):
     return HttpResponse("Done")
 
 
+@login_required(login_url='/')
+def edit_blog(request, blog_id):
+    blog = get_object_or_404(Blog, pk=blog_id, is_deleted=False, author=request.user)
+    if request.method == "POST":
+        blog.description = request.POST.get('desc') if request.POST.get('desc') else blog.description
+        if request.FILES.get('image', '') != '':
+            blog.image = request.FILES.get('image')
+        blog.save()
+        return redirect(homepage)
+    total_users = User.objects.all().count()
+    context = {
+        'blog': blog,
+        'total_users': total_users
+    }
+    return render(request, 'app/blog_edit.html', context)
+
+
 @login_required(login_url="/")
 def comments(request, blog_id):
     if not request.user.is_authenticated:
