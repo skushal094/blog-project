@@ -1,0 +1,22 @@
+{% extends 'app/base.html' %}
+
+{% block title %}Edit comment{% endblock %}
+
+{% block content %}
+
+<h3 class="mb-3">Comment from {{ comment.user_id }}</h3>
+<div class="help"><small class="text-muted">On {{ comment.updated_at|date:'d M, Y' }} at {{ comment.updated_at|date:"P" }}</small></div>
+<form class="form row" action="" method="post">
+    {% csrf_token %}
+    <div class="form-group mx-sm-0 mb-2 col-lg-6 col-sm-12">
+        <label for="inputPassword2" class="sr-only">Comment</label>
+        <input name="cmt_text" type="text" class="form-control" id="inputPassword2" value="{{ comment.text }}" placeholder="Add your comment here..." required>
+    </div>
+    <button type="submit" class="btn btn-primary ml-2 mb-2">Comment</button>
+    <input type="reset" class="btn btn-secondary ml-2 mb-2" value="Reset" />
+</form>
+<div class="row">
+    <div class="col-12 mt-3"><a href="{% url 'comments' blog_id=comment.blog_id.id %}"><button type="button" class="btn btn-secondary"><i class="fa fa-arrow-circle-left" aria-hidden="true"></i> Go Back</button></a></div>
+</div>
+
+{% endblock %}

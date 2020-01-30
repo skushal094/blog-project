@@ -47,6 +47,7 @@
             <span id="like{{ comment.id }}number">{{ comment.likes }}</span>
             {% if comment.user_id == request.user %}
             <span class="float-right delete-comment"  id="{{ comment.id }}" style="cursor: pointer;" onclick="deleteComment(this);"><i class="fa fa-trash" aria-hidden="true"></i></span>
+            <a href="{% url 'edit_comment' comment_id=comment.id %}" class="float-right edit-comment mr-3 text-secondary" style="cursor: pointer; text-decoration:none;"><i class="fa fa-pencil" aria-hidden="true"></i></a>
             {% endif %}
         </small>
     </p>
