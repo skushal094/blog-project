@@ -2,14 +2,18 @@
 View file having views to handle user requests.
 """
 
-from django.shortcuts import render, redirect, HttpResponse, get_object_or_404
+from django.shortcuts import render, redirect, HttpResponse, get_object_or_404, Http404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.contrib.auth.hashers import check_password
 from django.db.models import F, Case, When, BooleanField, Count, Q
+from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.decorators import login_required
+from random import randint
+import time
 from .models import Blog, Like, Comment
+from .util import sendmail
 
 
 def loginpage(request):
@@ -67,6 +71,52 @@ def signup(request):
             messages.add_message(request, messages.WARNING, "Passwords do not match")
             return redirect(signup)
     return render(request, 'app/signup.html', {})
+
+
+def forgot_password(request):
+    context = {}
+    if request.method == 'POST':
+        if request.POST.get('action', '') == 'otp':
+            username = request.POST.get('username', '')
+            try:
+                user = User.objects.get(username=username)
+            except ObjectDoesNotExist:
+                messages.add_message(request, messages.ERROR, "Username doesn't exist.")
+                return redirect(forgot_password)
+            otp = randint(100000, 999999)
+            email_subject = "Your OTP to change password"
+            try:
+                sendmail(email_subject, 'mail_template_otp', [user.email,], {'username': user.username, 'otp': otp})
+                request.session['otp'] = otp
+                request.session['otp_time'] = time.time()
+                request.session['username_change'] = user.username
+            except:
+                messages.add_message(request, messages.ERROR, "Error sending mail to your email address.")
+            else:
+                messages.add_message(request, messages.SUCCESS, "Email with otp is sent to your email address.")
+                messages.add_message(request, messages.INFO, "OTP is valid for only 2 minutes.")
+            return render(request, 'app/forgot_password_otp.html', context)
+        elif request.POST.get('action', '') == 'change_pwd':
+            if (time.time() - request.session.get('otp_time', 0)) < 120:
+                if request.POST.get('otp', 0) == str(request.session.get('otp', -1)):
+                    del request.session['otp']
+                    del request.session['otp_time']
+                    return render(request, 'app/forgot_password_change_pwd.html', context)
+                else:
+                    messages.add_message(request, messages.ERROR, "Wrong OTP, try again.")
+                    return redirect(loginpage)
+            else:
+                messages.add_message(request, messages.ERROR, "OTP expired, try again.")
+                return redirect(loginpage)
+        elif request.POST.get('action', '') == 'submit':
+            user = get_object_or_404(User, username=request.session.get('username_change', 0))
+            user.set_password(request.POST.get('pass1'))
+            user.save()
+            messages.add_message(request, messages.SUCCESS, "Password has been reset.")
+            return redirect(loginpage)
+        else:
+            raise Http404
+    return render(request, 'app/forgot_password_email.html', context)
 
 
 def logoutlink(request):
