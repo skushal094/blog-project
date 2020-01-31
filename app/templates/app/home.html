@@ -27,7 +27,7 @@
 </a>
                     <a class="btn btn-sm btn-outline-secondary" href="{% url 'likes' blog_id=blog.pk %}?refer={{ request.path|urlencode }}">{{ blog.likes }}</a>
                 </div>
-                <small class="text-muted">On {{ blog.updated_at|date:'d M, Y' }} at {{ blog.updated_at|date:"P" }}</small>
+                <small class="text-muted">On {{ blog.created_at|date:'d M, Y' }} at {{ blog.created_at|date:"P" }}</small>
             </div>
             <div class="d-flex justify-content-between align-items-center mt-1">
                 <div class="btn-group"><a class="btn btn-sm btn-outline-primary" href="{% url 'comments' blog_id=blog.pk %}"><small class="">Add/View Comments</small></a></div>
